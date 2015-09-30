@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>N-Body Simulator</title>
+<script type="text/javascript" src="scripts/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="scripts/camera.js"></script>
+<script type="text/javascript" src="scripts/input.js"></script>
+<script type="text/javascript" src="scripts/graphics.js"></script>
+<script type="text/javascript" src="scripts/integration.js"></script>
+<script type="text/javascript" src="scripts/physics.js"></script>
+
+<script type="text/javascript">
+
+var dt = 0.125;
+var baseDt = 0.125;
+var dtMult = 1;
+var t = 0;
+var ticks = 0;
+var sightDistance = 10000;
+var pointSize = 2.0;
+var G = 0.1;
+var friction = 0.5;
+var delay = 17;
+var wall;
+var camera;
+var paused = false;
+var calculations = 0;
+var explosionSensitivity = 20;
+var forceDispersion = 10;
+var forcePush = 100;
+var trailLength = 3975;
+var trailInterval = 1;
+var explosionParticles = 1000;
+var vectorLength = 5;
+var vectorAcclBoost = 10;
+var orbitMax = 5000;
+var orbitMaxDt = 1000;
+
+function Initialize()
+{
+	camera = new Camera();
+	
+	InitGraphics();
+	InitSolarSystem();
+		
+	camera.SetLookAtMode([planets[0]], planets[0].radius);
+	camera.h = 35;
+	Run();
+}
+
+function InitSolarSystem()
+{
+	//Sun
+	var color = [.8, .4 , 0, .25];
+	
+	var planet = CreatePlanetObject(10, 1800, color);
+	
+	planet.name = "Sun";
+	planet.angularVelocity[1] = -0.05;
+	planets.push(planet);
+	
+	//Planet
+	for(var i = 0; i < 10; i++)
+	{
+		var position = vec3.create();
+		var bCollisionDetected = true;
+		
+		//Pick a radius for the planets
+		var radius = Math.random() * 2 + 1;
+		
+		//Make sure that it doesn't collide with any other objects
+		while(bCollisionDetected)
+		{
+			bCollisionDetected = false;
+			
+			//Pick a random coordinate
+			position[0] = Math.random() * 100 - 50;
+			position[1] = Math.random() * 10 - 5;
+			position[2] = Math.random() * 100 - 50;
+			
+			var distance = vec3.create();
+			
+			//Check the distance from the sun, must be 10 times the radius of the sun
+			distance = vec3.subtract(position, planet.position, distance);
+			if(vec3.length(distance) < planet.radius * 2)
+				bCollisionDetected = true;
+				
+			//Check the distance from the other planets
+			for(var j = 1; j < planets.length; j++)
+			{
+				distance = vec3.subtract(position, planets[j].position, distance);
+				if(vec3.length(distance) < (planets[j].radius + radius + 3))
+					bCollisionDetected = true;
+			}
+		}
+		
+		var color2 = [Math.random(), Math.random(), Math.random(), .5];
+		var planet2 = CreatePlanetObject(radius, radius, color2);
+		planet2.position = position;
+		planet2.name = "Planet" + i;
+		SetOrbit(planet2, [planet], "y");
+				
+		planets.push(planet2);
+	}
+}
+
+function Run()
+{	
+	if(!paused)
+	{
+		calculations = 0;
+		//canvas.width = canvas.width;	
+		
+		MovePlanetsWithIntegrationAndCollisions2();
+		//MovePlanetsWithCollisions();	
+		Draw();
+		t += dt * 1000;
+		ticks++;
+	}
+		
+	setTimeout(Run, delay);
+}
+
+</script>
+
+<style>
+	body
+	{
+		height: 100%;
+		background-image: url('img/stars4.jpg');
+		background-repeat:no-repeat;
+		background-attachment:fixed;
+		background-position:center;		
+		color: red;
+		background-color: black;
+	}
+
+	#myCanvas
+	{
+		position:absolute;	
+		top: 0px;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, .1);
+	}
+	
+	#menu
+	{
+		position: absolute;
+		width: 60%;
+		height: 80%;
+		left: 20%;
+		top: 20%;
+	}
+	
+	h1 
+	{
+		position: absolute;
+		width: 80%;
+		height: 20%;
+		top: 0%;
+		left: 10%;
+		text-align: center;
+		font-family: "Arial Black", Gadget, sans-serif;
+		font-size: 250%;
+	}
+	
+	table
+	{
+		border: 1px solid red;
+		width: 100%;
+	}
+	
+	td
+	{
+		border: 1px solid red;
+		width: 33%;
+		text-align: center;
+	}
+	
+	a:link {color:#6666FF;}      /* unvisited link */
+	a:visited {color:#00FF00;}  /* visited link */
+	a:hover {color:#FF00FF;}  /* mouse over link */
+	a:active {color:#0000FF;}  /* selected link */
+</style>
+
+</head>
+
+<body onload="Initialize();" id="myBody" onresize="Resize()" >	
+	<canvas id="myCanvas">
+		Your web browers does not support HTML5.
+	</canvas>
+	<h1>
+		N-Body Simulations
+	</h1>
+	<div id="menu">
+		<table>
+			<tr>
+				<td><a href="simple_orbit.html">Simple Orbit</a></td>
+				<td><a href="elliptical_orbit.html">Elliptical Orbit</a></td>
+				<td><a href="binary_orbit.html">Binary Orbit</a></td>
+			</tr>
+			<tr>
+				<td><a href="collision_one.html">Collision One</a></td>
+				<td><a href="collision_two.html">Collision Two</a></td>
+				<td><a href="collision_three.html">Collision Three</a></td>
+			</tr>
+			<tr>
+				<td><a href="galaxy_one.html">Galaxy One</a></td>
+				<td><a href="saturn.html">Saturn</a></td>
+				<td><a href="explosions.html">Explosions</a></td>
+			</tr>
+			<tr>
+				<td><a href="sol_small.html">Sol Not To Scale</a></td>
+				<td><a href="sol.html">Sol To Scale</a></td>
+				<td><a href="photo.html">Photo</a></td>
+			</tr>			
+		</table>
+	</div>
+</body>
+
+</html> 

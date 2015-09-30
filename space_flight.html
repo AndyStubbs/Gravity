@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>Space Flight</title>
+<script type="text/javascript" src="scripts/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="scripts/camera.js"></script>
+<script type="text/javascript" src="scripts/camera_flight.js"></script>
+<script type="text/javascript" src="scripts/input_flight.js"></script>
+<script type="text/javascript" src="scripts/graphics.js"></script>
+<script type="text/javascript" src="scripts/integration.js"></script>
+<script type="text/javascript" src="scripts/physics.js"></script>
+<script type="text/javascript" src="scripts/scale_units.js"></script>
+<script type="text/javascript" src="scripts/init_sol.js"></script>
+<script type="text/javascript">
+	var gGlobalScale = 15E6;
+	var dt = 1;
+	var baseDt = 1;
+	var dtMult = 1;
+	var d = new Date("Apr 2, 2013 00:00:00");
+	var t = d.getTime();
+	var ticks = 0;
+	var trailLength = 6000;
+	var trailInterval = 5;
+	var sightDistance = 58232E6;
+	var friction = 0.5;
+	var delay = 17;
+	var camera;
+	var paused = false;
+	var calculations = 0;
+	var explosionSensitivity = 2000;
+	var forceDispersion = 0.02;
+	var forcePush = 1E7;
+	var explosionParticles = 10000;
+	var pointSize = 2.0;
+	var vectorLength = 15500000;
+	var vectorAcclBoost = 2000000000;
+	var orbitMax = 10000;
+	var orbitMaxDt = 100000;
+	var G = 1;
+
+	var movePlanets;
+	var movePlanet;
+	var images = [];
+	var imageCount = 0;
+	var imageTotal;
+	var ships = [];
+
+	function Initialize()
+	{
+		document.onselectstart = function () { return false; };
+		document.onContextMenu = function () { return false; };
+		document.oncontextmenu = function () { return false; };
+        Init_Images();
+	}
+
+	function Initialize_Final()
+	{
+		camera = new Camera();
+
+		InitGraphics();
+		InitTextureShaders();
+		InitSolarSystem();
+		InitShips();
+
+		camera.SetFreeMode();
+   		camera.position = ships[0].position;
+		camera.Update(0, 0, 0);
+		Run();
+	}
+
+	function InitShips()
+	{
+         var ship = {
+           position: vec3.create(),
+		   motion: vec3.create(),
+		   rotation: vec3.create(),
+		   angularVelocity: vec3.create(),
+		   radius: 1,
+		   mass: 1,
+		   UpdateTrail: function () {},
+         };
+
+		 vec3.set(planets[3].position, ship.position);
+		 ship.position[2] -= 5;
+		 SetOrbit(ship, [planets[3]], "y");
+		 ship.motion[0] += planets[3].motion[0];
+		 ship.motion[1] += planets[3].motion[1];
+         ship.motion[2] += planets[3].motion[2];
+		 ships.push(ship);
+	}
+
+	function Run()
+	{
+		if (!paused)
+		{
+			calculations = 0;
+			//canvas.width = canvas.width;
+
+			movePlanets();
+			MoveShips();
+			ApplyExplosions();
+			DrawTextured();
+			t += dt * 1000;
+			ticks++;
+		}
+
+		setTimeout(Run, delay);
+	}
+
+	function MoveShips()
+	{
+		collisions = [];
+		for(var i = 0; i < ships.length; i++)
+		{
+			ships[i].acceleration = vec3.create();
+			Integrate(ships[i], t, dt, i);
+			ships[i].UpdateTrail();
+		}
+
+		/*for(var i in collisions)
+		{
+			var ship1 = ships[collisions[i].i];
+			var ship2 = ships[collisions[i].j];
+
+			//Set angular velocities
+			var vec_w = CalculateCollisionSpin(ship1, ship2);
+			var vec_w = CalculateCollisionSpin(ship2, ship1);
+
+			PlaceSmallerObjectOnRadius(ship1, ship2);
+
+			//Calculate the new velocities
+			CalculateCollisionResponse(collisions[i]);
+		}  */
+
+		UpdateRotation(dt);
+	}
+
+</script>
+
+<style>
+	body
+	{
+		height: 100%;
+		background-color: black;
+		cursor: default;
+	}
+
+	#myCanvas
+	{
+		position:absolute;
+		top: 0px;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, .1);
+	}
+
+	#div_page
+	{
+		position:absolute;
+		top: 0px;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0);
+		color: red;
+	}
+
+	#div_stats
+	{
+		position: absolute;
+		top: 0px;
+		left: 79%;
+		width: 20%;
+		background-color: rgba(0, 0, 0, 0);
+		color: red;
+		border: 1px solid red;
+	}
+
+	#cross_hair
+	{
+		position: absolute;
+		width: 2%;
+		height: 2%;
+		background-color: red;
+		top: 49%;
+		left: 49%;
+	}
+
+	fieldset
+	{
+		text-align: center;
+		width: 300px;
+	}
+
+	#div_lookat_cam
+	{
+		display: none;
+	}
+</style>
+
+</head>
+
+<body onload="Initialize();" id="myBody" onresize="Resize()" onkeydown="KeyDown(event)">
+	<canvas id="myCanvas">
+		Your web browers does not support HTML5.
+	</canvas>
+		<div id="div_page" style="color: red" onmousemove="MouseMove(event)" onmousedown="MouseDown(event)" onmouseup="MouseUp(event)" onmousewheel="MouseWheel(event)">
+	</div>
+	<div id="div_stats"></div>
+	<div id="cross_hair"></div>
+</body>
+
+</html>

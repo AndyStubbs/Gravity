@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>Binary Orbit</title>
+<script type="text/javascript" src="scripts/glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="scripts/camera.js"></script>
+<script type="text/javascript" src="scripts/input.js"></script>
+<script type="text/javascript" src="scripts/graphics.js"></script>
+<script type="text/javascript" src="scripts/integration.js"></script>
+<script type="text/javascript" src="scripts/physics.js"></script>
+<script type="text/javascript" src="scripts/scale_units.js"></script>
+<script type="text/javascript">
+var gGlobalScale = 1;
+var dt = 0.25;
+var baseDt = 0.25;
+var dtMult = 1;
+var t = 0;
+var ticks = 0;
+var trailLength = 13975;
+var trailInterval = 1;
+var sightDistance = 10000;
+var G = 0.1;
+var friction = 0.5;
+var delay = 17;
+var camera;
+var paused = false;
+var calculations = 0;
+var explosionSensitivity = 2000;
+var forceDispersion = 5;
+var forcePush = 100;
+var explosionParticles = 10000;
+var pointSize = 1.0;
+var vectorLength = 5;
+var vectorAcclBoost = 10;
+var orbitMax = 5000;
+var orbitMaxDt = 1000;
+
+var movePlanets;
+var movePlanet;
+function Initialize()
+{
+	ToggleFieldset('fsObjects', document.getElementById("chkObjects"));
+	movePlanets = MovePlanetsWithIntegrationAndCollisions2;
+	movePlanet = Integrate;
+	document.onselectstart = function () { return false; };
+	document.onContextMenu = function () { return false; };
+	document.oncontextmenu = function () { return false; };
+	
+	camera = new Camera();
+	
+	InitGraphics();
+	InitSolarSystem();
+	InitializeSelObjects();
+	GetCameraType();
+	document.getElementById("txtG").value = G;
+	camera.SetLookAtMode(planets, planets[0].radius);	
+	camera.zoom = 100;
+	camera.h = 50;
+	camera.angle = 0;
+	camera.Update(0, 0, 0);
+	
+	Run();
+}
+
+function InitSolarSystem()
+{
+	var planet = CreatePlanetObject(3, 1000, [.5, 0, 0, .5]);
+	var planet2 = CreatePlanetObject(3, 1000, [0, 0.5, 0, .5]);
+	
+	planet.name = "Sun1";
+	planet.position[0] = -25;		
+				
+	planet2.name = "Sun2";
+	planet2.position[0] = 25;
+	
+	planets.push(planet);	
+	planets.push(planet2);
+	
+	//Calculate the center of mass ob both objects
+	var cm = CalcCenterOfMass(planets);	
+	var rx = cm.x - planet.position[0];
+	var ry = cm.y - planet.position[1];
+	var rz = cm.z - planet.position[2];
+	var r = Math.sqrt( rx * rx + ry * ry + rz * rz );
+	
+	//Calculate the velocities both objects need to travel
+	var v = Math.sqrt((G * cm.mass) / r) / 3;
+
+	//Calculate the direction of the velocity direction vector for the first planet	
+	var mvMatrix = mat4.create();
+	mat4.identity(mvMatrix);
+	mat4.rotateY(mvMatrix, Math.PI / 2);
+	
+	var vecOne = vec3.create();
+	vecOne[0] = rx;
+	vecOne[1] = ry;
+	vecOne[2] = rz;
+	vec3.normalize(vecOne);
+	mat4.multiplyVec3(mvMatrix, vecOne);
+	
+	//Scale the motion by the velocity
+	planet.motion = vec3.scale(vecOne, v, planet.motion);
+	
+	var rx = cm.x - planet2.position[0];
+	var ry = cm.y - planet2.position[1];
+	var rz = cm.z - planet2.position[2];
+	var r = Math.sqrt( rx * rx + ry * ry + rz * rz );
+	
+	//Calculate the direction of the velocity direction vector for the first planet	
+	var mvMatrix = mat4.create();
+	mat4.identity(mvMatrix);
+	mat4.rotateY(mvMatrix, Math.PI / 2);
+	
+	var vecOne = vec3.create();
+	vecOne[0] = rx;
+	vecOne[1] = ry;
+	vecOne[2] = rz;
+	vec3.normalize(vecOne);
+	mat4.multiplyVec3(mvMatrix, vecOne);
+	
+	//Scale the motion by the velocity
+	planet2.motion = vec3.scale(vecOne, v, planet2.motion);
+	
+}
+
+function Run()
+{	
+	if(!paused)
+	{
+		calculations = 0;
+		//canvas.width = canvas.width;	
+		
+		movePlanets();
+		ApplyExplosions();
+		Draw();	
+		DisplayFPS();
+		DisplayCalculations();
+		t += dt * 1000;
+		ticks++;
+	}
+		
+	setTimeout(Run, delay);
+}
+
+</script>
+
+<style>
+	body
+	{
+		height: 100%;
+		background-color: black;
+		cursor: default;
+	}
+
+	#myCanvas
+	{
+		position:absolute;	
+		top: 0px;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, .1);
+	}
+	
+	#div_page
+	{
+		position:absolute;	
+		top: 0px;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0);
+		color: red;
+	}
+	
+	#div_camera
+	{
+		position: absolute;
+		top: 0px;
+		left: 0px;
+		width: 340px;
+		background-color: rgba(0, 0, 0, 0);
+		color: red;
+		border: 1px solid red;
+		text-align: center
+	}
+	
+	#div_stats
+	{
+		position: absolute;
+		top: 0px;
+		left: 79%;
+		width: 20%;
+		background-color: rgba(0, 0, 0, 0);
+		color: red;
+		border: 1px solid red;
+	}
+	
+	#cross_hair
+	{
+		position: absolute;
+		width: 2%;
+		height: 2%;
+		background-color: red;
+		top: 49%;
+		left: 49%;
+	}
+	
+	fieldset
+	{
+		text-align: center;
+		width: 300px;
+	}
+	
+	#div_lookat_cam
+	{
+		display: none;
+	}
+</style>
+
+</head>
+
+<body onload="Initialize();" id="myBody" onresize="Resize()" >	
+	<canvas id="myCanvas">
+		Your web browers does not support HTML5.
+	</canvas>
+		<div id="div_page" style="color: red" onmousemove="MouseMove(event)" onmousedown="MouseDown(event)" onmouseup="MouseUp(event)" onmousewheel="MouseWheel(event)">
+	</div>
+	<div id="div_camera">
+		<input type="button" value="Hide Settings" id="btnShowHideSettings" onclick="ToggleSettings()"/>
+		<input type="button" value="Show Grid" id="btnToggleGrid" onclick="ToggleGrid()"/>
+		<div id="div_settings">
+			G: <input type="input" value="6.67384E-11" id="txtG"/>
+			<input type="button" value="Update" onclick="UpdateG()"/>
+			<br />
+			
+			<fieldset>
+				<legend>
+					<input id="chkTime" type="checkbox" onclick="ToggleFieldset('fsTime', this)" checked="checked"/>
+					<label for="chkTime">Show Time Settings</label>
+				</legend>
+				<div id="fsTime">
+					<input id="btn_PlayPause" type="button" value="||" onclick="TimePlayPause(this)" />
+					<input type="button" value="<<" onclick="TimeSlowDown(this)" />
+					<input type="button" value=">>" onclick="TimeSpeedUp(this)" />
+					<input id="txt_speed" value="1" style="width: 100px"/> X
+					<input type="button" value="Update" onclick="TimeUpdate()"/>
+				</div>
+			</fieldset>
+			<fieldset>
+				<legend>
+					<input id="chkCamera" type="checkbox" onclick="ToggleFieldset('fsCamera', this)" checked="checked"/>
+					<label for="chkCamera">Show Camera Settings</label>					
+				</legend>
+				<div id="fsCamera">
+					Style:
+					<select id="sel_cameraType">
+						<option selected="selected">Look At</option>
+						<option>Free</option>
+					</select>
+					<input type="button" value="Set Camera" onclick="GetCameraType()"/>
+					<div id="div_free_cam">			
+						<table>
+							<tr><td>X Position:</td><td><input id="camX" type="text" style="width: 140px"/></td></tr>
+							<tr><td>Y Position:</td><td><input id="camY" type="text" style="width: 140px"/></td></tr>
+							<tr><td>Z Position:</td><td><input id="camZ" type="text" style="width: 140px"/></td></tr>
+						</table>
+						Yaw: <input id="camYaw" type="text" style="width: 50px"/>
+						Pitch: <input id="camPitch" type="text" style="width: 50px"/>
+						<input type="Button" value="Update" onclick="UpdateCameraFree()" />
+					</div>
+					<div id="div_lookat_cam">
+						<table>
+							<tr><td>Zoom:</td><td><input id="camZoom" type="text" style="width: 140px"/></td></tr>
+							<tr><td>Height:</td><td><input id="camHeight" type="text" style="width: 140px"/></td></tr>
+							<tr><td>Angle:</td><td><input id="camAngle" type="text" style="width: 140px"/></td></tr>
+						</table>
+						<input type="Button" value="Update" onclick="UpdateCameraLookAt()" />
+					</div>		
+				</div>
+			</fieldset>	
+			<fieldset>
+				<legend>
+					<input id="chkObjects" type="checkbox" onclick="ToggleFieldset('fsObjects', this)" checked=""/>
+					<label for="chkObjects">Show Object Explorer</label>						
+				</legend>		
+					<div id="fsObjects">
+						<select id="sel_objects" multiple style="width:190px">
+						</select>
+						<br />	
+						<input type="button" value="Select Object" onclick="SelectObject()"/>
+						<input type="button" value="Look At Object" onclick="SelectCameraTarget()"/>
+						<br />
+						Selected Object: <span id="spanSelectedObject">&nbsp;</span>
+						<br />
+						<table>
+							<tr>
+								<td>X:</td>
+								<td><input id="objX" type="text" style="width: 140px"/></td>
+								<td><input type="button" value="Show Orbit" onclick="ShowOrbit()"/></td>
+							</tr>
+							<tr>
+								<td>Y:</td>
+								<td><input id="objY" type="text" style="width: 140px"/></td>
+								<td><input type="button" value="Clear Orbits" onclick="ClearOrbits()"/></td>
+							</tr>
+							<tr>
+								<td>Z:</td>
+								<td><input id="objZ" type="text" style="width: 140px"/></td>
+								<td><input type="button" value="Show Trails" onclick="ShowTrails()"/></td>
+							</tr>
+							<tr>
+								<td>VX:</td>
+								<td><input id="objVX" type="text" style="width: 140px"/></td>
+								<td><input type="button" value="Clear Trails" onclick="ClearTrails()"/></td>
+							</tr>
+							<tr>
+								<td>VY:</td>
+								<td><input id="objVY" type="text" style="width: 140px"/></td>
+								<td><input type="button" value="Vectors" onclick="ShowVectors()"/></td>
+							</tr>
+							<tr>
+								<td>VZ:</td>
+								<td><input id="objVZ" type="text" style="width: 140px"/></td>
+								<td><input type="button" value="Explode" onclick="Explode()"/></td>
+							</tr>
+							<tr>
+								<td>Mass:</td>
+								<td><input id="objMass" type="text" style="width: 140px"/></td>							
+							</tr>
+							<tr><td>Radius:</td><td><input id="objRadius" type="text" style="width: 140px"/></td></tr>
+						</table>			
+							
+						<input type="button" value="Update" onclick="UpdateTarget()"/>
+						<input type="button" value="Clear" onclick="ClearValues()"/>
+						<input type="button" value="Set Orbit" onclick="SetObjectOrbit()" />
+						<input type="button" value="New" onclick="CreateNewObject()"/>
+					</div>
+			</fieldset>
+		</div>
+	</div>
+	<div id="div_stats"></div>
+</body>
+
+</html> 
