@@ -1,17 +1,17 @@
 # Gravity
 
-A **3D Gravity and Planet Simulator** built with **HTML5, WebGL, and Vanilla JavaScript**. This lightweight project simulates gravitational interactions and elastic collisions between objects in a 3D space. It includes intuitive mouse controls for navigating the simulation, offering a dynamic and interactive experience.
+A **3D Gravity and Planet Simulator** built with **HTML5, WebGL, and Vanilla JavaScript**. This lightweight project simulates gravitational interactions and elastic collisions between objects in a 3D space. It includes mouse controls for navigating the simulation, offering a dynamic and interactive experience.
 
 ## Features
-- Realistic gravitational physics.
+- Realistic-ish gravitational physics.
 - Elastic collisions between objects.
 - Visualization of orbital paths.
 - Interactive camera controls using the mouse:
-	- Drag to rotate the camera around a fixed point.
-	- Camera always focuses on the central point of the simulation.
+	- Drag to rotate the camera around a fixed point or free movement.
+	- Camera controls aren't the best but works.
 	- Mouse wheel to zoom in and out.
 - Explosive effects to destroy planets.
-- Pause, resume, and reset functionality.
+- Pause, resume, and speed up time.
 
 ## How to Use
 
