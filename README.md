@@ -50,5 +50,6 @@ You can run the demo online at:
 
 1. Select the explosions link.
 2. Rotate camera to the right (drag left) so you can see all the planets.
-2. Explode the sun.
-3. Watch explosions chain reaction.
+3. Select the sun.
+4. Explode the sun.
+5. Watch explosions chain reaction.
