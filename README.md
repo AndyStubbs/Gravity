@@ -24,6 +24,10 @@ A **3D Gravity and Planet Simulator** built with **HTML5, WebGL, and Vanilla Jav
    * Object/Planet settings
    * Create new objects/planets
 
+## Try Online
+You can run the demo online at:  
+[Gravity on Andy's Web Games](https://andyswebgames.com/apps/gravity/)
+
 ## Local Setup
 
 1. Clone or download the repository:
@@ -45,5 +49,6 @@ A **3D Gravity and Planet Simulator** built with **HTML5, WebGL, and Vanilla Jav
 ## Fun Example 2
 
 1. Select the explosions link.
+2. Rotate camera to the right (drag left) so you can see all the planets.
 2. Explode the sun.
-3. Watch explosions chain reaction
+3. Watch explosions chain reaction.
