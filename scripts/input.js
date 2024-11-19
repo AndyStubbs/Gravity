@@ -98,7 +98,8 @@ function MouseMove(e)
 		}
 	}
 	
-	lastMouseX = mouseX;
+	lastMouseX = mouseX;
+
 	lastMouseY = mouseY;
 	GetCameraData();
 }
@@ -267,7 +268,8 @@ function InitializeSelObjects()
 {
 	var list = document.getElementById("sel_objects");
 	list.options.length = 0;
-	for(var i = planets.length - 1; i >= 0; i--)
+	//for(var i = planets.length - 1; i >= 0; i--)
+	for(var i = 0; i < planets.length; i += 1)
 	{
 		var option=document.createElement("option");
 		option.text = planets[i].name;
@@ -803,7 +805,8 @@ function DisplayCalculations()
 }
 
 function ToggleGrid() 
-{
+{
+
 	if (document.getElementById("btnToggleGrid").value == "Show Grid") 
 	{
 		//Grab the dimensions for the grid
@@ -884,59 +887,112 @@ function ToggleGrid()
 		grid = false;
 		document.getElementById("btnToggleGrid").value = "Show Grid";
 	}
-}
-
-var lastPlanetSize = "Normal";
-function TogglePlanetSize(obj) 
-{
-	var sx = 1;
-	var px = 1;
-
-	switch(obj.value)
-	{
-		case "Normal":
-			sx = 1;
-			px = 1;
-			break;
-		case "1x/2x":
-			sx = 1;
-			px = 2;
-			break;
-		case "2x/20x":
-			sx = 2;
-			px = 20;
-			break;
-		case "5x/50x":
-			sx = 5;
-			px = 50;
-			break;
-		case "10x/100x":
-			sx = 10;
-			px = 100;
-			break;		
-		case "50x/500x":
-			sx = 50;
-			px = 500;
-			break;
-		case "100x/1000x":
-			sx = 100;
-			px = 1000;
-			break;
-		case "200x/5000x":
-			sx = 200;
-			px = 5000;
-			break;
-	}
-
-	if (obj.value != lastPlanetSize)
-	{
-		planets[0].model = CreateSphereTextured(planets[0].radius * sx, planets[0].model.texture);
-
-		for (var i = 1; i < planets.length; i++) {
-			planets[i].model = CreateSphereTextured(planets[i].radius * px, planets[i].model.texture);
-		}
-	}
-	lastPlanetSize = obj.value;
+}
+
+
+
+var lastPlanetSize = "Normal";
+
+function TogglePlanetSize(obj) 
+
+{
+
+	var sx = 1;
+
+	var px = 1;
+
+
+
+	switch(obj.value)
+
+	{
+
+		case "Normal":
+
+			sx = 1;
+
+			px = 1;
+
+			break;
+
+		case "1x/2x":
+
+			sx = 1;
+
+			px = 2;
+
+			break;
+
+		case "2x/20x":
+
+			sx = 2;
+
+			px = 20;
+
+			break;
+
+		case "5x/50x":
+
+			sx = 5;
+
+			px = 50;
+
+			break;
+
+		case "10x/100x":
+
+			sx = 10;
+
+			px = 100;
+
+			break;		
+
+		case "50x/500x":
+
+			sx = 50;
+
+			px = 500;
+
+			break;
+
+		case "100x/1000x":
+
+			sx = 100;
+
+			px = 1000;
+
+			break;
+
+		case "200x/5000x":
+
+			sx = 200;
+
+			px = 5000;
+
+			break;
+
+	}
+
+
+
+	if (obj.value != lastPlanetSize)
+
+	{
+
+		planets[0].model = CreateSphereTextured(planets[0].radius * sx, planets[0].model.texture);
+
+
+
+		for (var i = 1; i < planets.length; i++) {
+
+			planets[i].model = CreateSphereTextured(planets[i].radius * px, planets[i].model.texture);
+
+		}
+
+	}
+
+	lastPlanetSize = obj.value;
+
 }
 
 
