@@ -26,7 +26,7 @@ A **3D Gravity and Planet Simulator** built with **HTML5, WebGL, and Vanilla Jav
 
 ## Try Online
 You can run the demo online at:  
-[Gravity on Andy's Web Games](https://andyswebgames.com/apps/gravity/)
+https://classic.andyswebgames.com/apps/gravity/
 
 ## Local Setup
 
